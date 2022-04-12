@@ -1,0 +1,246 @@
+import React from "react";
+import {
+  BsFillChatDotsFill,
+  BsEmojiSmile,
+  BsFillMicFill,
+} from "react-icons/bs";
+import { IoMdSend } from "react-icons/io";
+
+import "./MessageBox.css";
+
+import { useEffect, useState } from "react";
+import axios from "axios";
+
+const MessageBox = () => {
+  const [text, setText] = useState("");
+  const [restext, setResText] = useState([]);
+  const [resImage, setResImage] = useState();
+  const [resQuickReplies, setquickReplies] = useState();
+  const [messages, setMessages] = useState([]);
+  let data;
+  function sendMessage(e) {
+    e.preventDefault();
+
+    if (text === "") {
+      return;
+    }
+
+    console.log("text: ", text);
+
+    setMessages((prev) => {
+      return [{ sender: "user", text: text }, ...prev];
+    });
+
+    axios
+      .post(`https://dailogflow-integration.herokuapp.com/talktochatbot`, {
+        text: text,
+      })
+      .then((response) => {
+        data = response.data.text.fulfillmentMessages;
+        console.log("response", data);
+
+        // if (data.length == 0) {
+        //   let newtext = data.map((item, index) =>
+        //     item[index].message === "text" ? item[index].text.text : ""
+        //   );
+        //   setResText(newtext);
+        // } else {
+        //   let newtext1 = data.map((item, index) =>
+        //     item[index].message === "text" ? item[index].text.text : ""
+        //   );
+        //   let newimage = data.map((item, index) =>
+        //     item[index].message === "image" ? item[index].image.imageUri : ""
+        //   );
+        //   let newquick = data.map((item, index) =>
+        //     item[index].message === "quickReplies"
+        //       ? item[index].setquickReplies.setquickReplies
+        //       : ""
+        //   );
+        //   setResText(newtext1);
+        //   setResImage(newimage);
+        //   setquickReplies(newquick);
+        // }
+
+        // data.map((item, index) => {
+        //   if (item[index].message === "text") {
+        //     setResText((restext += item[index].text.text));
+        //   }
+        //   if (item[index].message === "image") {
+        //     setResText((resImage = item[index].image.imageUri));
+        //   }
+        //   if (item[index].message === "quickReplies") {
+        //     setResText(
+        //       (resQuickReplies = item[index].quickReplies.quickReplies)
+        //     );
+        //   }
+        // });
+        // if (data.length === 1) {
+        //   setMessages((prev) => {
+        //     return [{ sender: "bot", text: restext[0] }, ...prev];
+        //   });
+        // } else {
+          setMessages((prev) => {
+            return [
+              {
+                sender: "bot",
+                text: data[1].text.text,
+                text1: data[2].text.text,
+                image: data[0].image.imageUri,
+                quickReplies: data[3].quickReplies.quickReplies[0],
+                quickReplies1: data[3].quickReplies.quickReplies[1],
+                quickReplies2: data[3].quickReplies.quickReplies[2],
+              },
+              ...prev,
+            ];
+            // return [
+            //   {
+            //     sender: "bot",
+            //     text: restext,
+            //     image: resImage,
+            //     quickReplies: resQuickReplies,
+
+            //   },
+            //   ...prev,
+            // ];
+          });
+        // }
+        console.log("After get Data;---", messages);
+        e.target.reset();
+        setText("");
+      })
+      .catch((error) => {
+        console.log("error: ", error);
+
+        setMessages((prev) => {
+          return [
+            { sender: "bot", text: "dummy response from chatbot" },
+            ...prev,
+          ];
+        });
+        e.target.reset();
+        setText("");
+      });
+  }
+  return (
+    <>
+      <div className="container">
+        <div className="chatScreen">
+          {/* ____________________________________________________________________________________ */}
+          {/* <div key="eachMessageIndex-message" className="user">
+            <div className="icon">
+              <BsFillChatDotsFill />
+            </div>
+            <div className="message-content">hi Im Waqar</div>
+          </div> */}
+
+          {messages?.map(
+            (eachMessage, eachMessageIndex) =>
+              eachMessage.sender !== "bot" ? (
+                <div key={`User-${eachMessageIndex}`} className="user">
+                  <div className="icon">
+                    <BsFillChatDotsFill />
+                  </div>
+                  <div className="message-content">{eachMessage.text}</div>
+                </div>):(<div key={`bot-${eachMessageIndex}`} className="message-box">
+                   <div className="icon">
+                     <BsFillChatDotsFill />
+                   </div>
+                   <div className="message-content">
+                     
+                         <div className="text">{eachMessage.text}</div>
+                         <div className="text">{eachMessage.text1}</div>
+                       
+                     
+                       <div className="Card">
+                         <img src={eachMessage.image} alt="image/uri" />
+                       </div>
+                     
+                     
+                       <div className="suggestion ">
+                         
+                           <button className="suggestion ">
+                             {eachMessage.quickReplies}
+                           </button>
+                           <button className="suggestion ">
+                             {eachMessage.quickReplies1}
+                           </button>
+                           <button className="suggestion ">
+                             {eachMessage.quickReplies2}
+                           </button>
+                         
+                       </div>
+                     
+                   </div>
+                 </div>)
+              // ) : messages.text.length === 1 ? (
+              //   <div key={`User-${eachMessageIndex}`} className="user">
+              //     <div className="icon">
+              //       <BsFillChatDotsFill />
+              //     </div>
+              //     <div className="message-content">{eachMessage.text}</div>
+              //   </div>
+              // ) : (
+              //   <div key={`bot-${eachMessageIndex}`} className="message-box">
+              //     <div className="icon">
+              //       <BsFillChatDotsFill />
+              //     </div>
+              //     <div className="message-content">
+              //       {messages.text &&
+              //         messages.text.map((item) => (
+              //           <div className="text">{item}</div>
+              //         ))}
+              //       {messages.image && (
+              //         <div className="Card">
+              //           <img src={messages.image} alt="image/uri" />
+              //         </div>
+              //       )}
+              //       {messages.quickReplies && (
+              //         <div className="suggestion ">
+              //           {messages.quickReplies.map((button) => (
+              //             <button className="suggestion ">
+              //               {button.quickReplies}
+              //             </button>
+              //           ))}
+              //         </div>
+              //       )}
+              //     </div>
+              //   </div>
+              // )
+
+            // <div
+            //   key={`${eachMessageIndex}-message`}
+            //   className={eachMessage.sender !== "bot" ? "user" : "message-box"}
+            // >
+            //   <div className="icon">
+            //     <BsFillChatDotsFill />
+            //   </div>
+            //   <div className="message-content">{eachMessage.text}</div>
+            // </div>
+          )}
+        </div>
+      </div>
+      <div className="messageSenderBox">
+        <button className="primaryBtn smile">
+          <BsEmojiSmile />
+        </button>
+        <form onSubmit={sendMessage} className="chat-bar">
+          <input
+            type="text"
+            placeholder="Enter your Message"
+            onChange={(e) => {
+              setText(e.target.value);
+            }}
+          />
+          <button className="primaryBtn">
+            <IoMdSend />
+          </button>
+        </form>
+        <button className="primaryBtn voice">
+          <BsFillMicFill />
+        </button>
+      </div>
+    </>
+  );
+};
+
+export default MessageBox;

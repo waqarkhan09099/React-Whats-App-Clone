@@ -1,0 +1,15 @@
+.App{
+  display: grid;
+  place-items: center;
+
+}
+
+.app-body{
+  margin-top: 1rem;
+
+  display: grid;
+  grid-template-columns:30% 1fr;
+  width: 90vw;
+  height: 90vh;
+  box-shadow: -1px 4px 10px -4px rgba(0, 0, 0, 0.603);
+}

@@ -1,0 +1,170 @@
+import React from "react";
+import {
+  BsFillChatDotsFill,
+  BsEmojiSmile,
+  BsFillMicFill,
+} from "react-icons/bs";
+import { IoMdSend } from "react-icons/io";
+
+import "./MessageBox.css";
+
+import { useEffect, useState } from "react";
+import axios from "axios";
+
+const MessageBox = () => {
+  const [text, setText] = useState("");
+  const [restext, setResText] = useState([]);
+  const [resImage, setResImage] = useState();
+  const [resQuickReplies, setquickReplies] = useState();
+  const [messages, setMessages] = useState([]);
+  let data;
+  function sendMessage(e) {
+    e.preventDefault();
+
+    if (text === "") {
+      return;
+    }
+
+    console.log("text: ", text);
+
+    setMessages((prev) => {
+      return [{ sender: "user", text: text }, ...prev];
+    });
+
+    axios
+      .post(`https://dailogflow-integration.herokuapp.com/talktochatbot`, {
+        text: text,
+      })
+      .then((response) => {
+        data = response.data.text.fulfillmentMessages;
+        console.log("response", data);
+
+        let textMessages = data.map((item, index) =>
+          item[index]?.message === "text" ? item[index].text.text : ""
+        );
+        let imageUri = data.map((item, index) =>
+          item[index]?.message === "image" ? item[index].image.imageUri : ""
+        );
+        let quickReplies = data.map((item, index) =>
+          item[index]?.message === "quickReplies"
+            ? item[index].quickReplies.quickReplies
+            : ""
+        );
+
+        setMessages((prev) => {
+          return [
+            {
+              sender: "user",
+              textMessages,
+              imageUri,
+              quickReplies,
+            },
+            ...prev,
+          ];
+        });
+
+        console.log("After get Data;---", messages);
+        e.target.reset();
+        setText("");
+      })
+      .catch((error) => {
+        console.log("error: ", error);
+
+        setMessages((prev) => {
+          return [
+            { sender: "bot", text: "dummy response from chatbot" },
+            ...prev,
+          ];
+        });
+        e.target.reset();
+        setText("");
+      });
+  }
+  return (
+    <>
+      <div className="container">
+        <div className="chatScreen">
+          {/* ____________________________________________________________________________________ */}
+          {/* <div key="eachMessageIndex-message" className="user">
+            <div className="icon">
+              <BsFillChatDotsFill />
+            </div>
+            <div className="message-content">hi Im Waqar</div>
+        </div> */} 
+
+          {messages?.map(
+            (eachMessage, eachMessageIndex) =>
+              eachMessage.sender !== "bot" ? (
+                <div key={`User-${eachMessageIndex}`} className="user">
+                  <div className="icon">
+                    <BsFillChatDotsFill />
+                  </div>
+                  <div className="message-content">{eachMessage.text}</div>
+                </div>
+              ) : (
+                
+                eachMessage?.textMessages
+                  ?.map((eachText) => {
+                    <div key={`User-${eachText}`} className="user">
+                      <div className="icon">
+                        <BsFillChatDotsFill />
+                      </div>
+                      <div className="message-content">{eachText}</div>
+                    </div>;
+                  })
+                  .concat([
+                    eachMessage.imageUri ? (
+                      <div className="Card">
+                        <img src={eachMessage.imageUri} alt="image/uri" />
+                      </div>
+                    ) : null,
+
+                    eachMessage.quickReplies ? (
+                      <div className="suggestion ">
+                        {eachMessage.quickReplies.map((button) => (
+                          <button className="suggestion ">
+                            {button.quickReplies}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null,
+                  ])
+              )
+
+            // <div
+            //   key={`${eachMessageIndex}-message`}
+            //   className={eachMessage.sender !== "bot" ? "user" : "message-box"}
+            // >
+            //   <div className="icon">
+            //     <BsFillChatDotsFill />
+            //   </div>
+            //   <div className="message-content">{eachMessage.text}</div>
+            // </div>
+          )}
+        </div>
+      </div>
+      <div className="messageSenderBox">
+        <button className="primaryBtn smile">
+          <BsEmojiSmile />
+        </button>
+        <form onSubmit={sendMessage} className="chat-bar">
+          <input
+            type="text"
+            placeholder="Enter your Message"
+            onChange={(e) => {
+              setText(e.target.value);
+            }}
+          />
+          <button className="primaryBtn">
+            <IoMdSend />
+          </button>
+        </form>
+        <button className="primaryBtn voice">
+          <BsFillMicFill />
+        </button>
+      </div>
+    </>
+  );
+};
+
+export default MessageBox;
